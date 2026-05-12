@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EarnHub Admin Panel - Users, Payments & Withdrawals</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            min-height: 100vh;
+        }
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .admin-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .admin-header h1 {
+            font-size: 28px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #4ade80;
+            color: #1a1a2e;
+        }
+        .btn-warning {
+            background: #f59e0b;
+            color: #1a1a2e;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-info {
+            background: #3b82f6;
+            color: white;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #16213e;
+            padding: 25px;
+            border-radius: 16px;
+            border-left: 4px solid #4ade80;
+        }
+        .stat-card.payments {
+            border-left-color: #3b82f6;
+        }
+        .stat-card.withdrawals {
+            border-left-color: #f59e0b;
+        }
+        .stat-card.pending {
+            border-left-color: #ef4444;
+        }
+        .stat-card h3 {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 800;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 12px 20px;
+            background: #16213e;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .tab-btn.active {
+            background: #667eea;
+        }
+        .table-container {
+            background: #16213e;
+            border-radius: 16px;
+            overflow-x: auto;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px;
+            background: #1a1a2e;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #2a2a4a;
+            font-size: 14px;
+        }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #065f4620;
+            color: #4ade80;
+        }
+        .badge-pending {
+            background: #92400e20;
+            color: #f59e0b;
+        }
+        .badge-expired {
+            background: #991b1b20;
+            color: #ef4444;
+        }
+        .badge-active {
+            background: #1e40af20;
+            color: #3b82f6;
+        }
+        .search-box {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .search-box input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #2a2a4a;
+            background: #1a1a2e;
+            color: white;
+            font-size: 14px;
+        }
+        .filter-select {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #2a2a4a;
+            background: #1a1a2e;
+            color: white;
+            font-size: 14px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-content h2 {
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #2a2a4a;
+            background: #1a1a2e;
+            color: white;
+        }
+        .export-section {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 20px;
+        }
+        .user-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a4a;
+            font-size: 13px;
+        }
+        .amount-positive {
+            color: #4ade80;
+        }
+        .amount-negative {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <div>
+                <h1>🔐 EarnHub Admin Panel</h1>
+                <p style="opacity:0.8;">Users, Payments & Withdrawals Management</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-info" onclick="refreshData()">🔄 Refresh Data</button>
+                <button class="btn btn-primary" onclick="exportData()">📥 Export Report</button>
+                <button class="btn btn-warning" onclick="showAddUserModal()">➕ Add User</button>
+                <button class="btn btn-danger" onclick="resetAllData()">⚠️ Reset All</button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>👥 Total Users</h3>
+                <div class="value" id="totalUsers">0</div>
+                <small style="opacity:0.7;">Active: <span id="activeUsers">0</span></small>
+            </div>
+            <div class="stat-card payments">
+                <h3>💰 Total Payments Received</h3>
+                <div class="value">₹<span id="totalPayments">0</span></div>
+                <small style="opacity:0.7;">Paid Users: <span id="paidUsers">0</span></small>
+            </div>
+            <div class="stat-card withdrawals">
+                <h3>💸 Total Withdrawals</h3>
+                <div class="value">₹<span id="totalWithdrawals">0</span></div>
+                <small style="opacity:0.7;">Completed: ₹<span id="completedWithdrawals">0</span></small>
+            </div>
+            <div class="stat-card pending">
+                <h3>⏳ Pending Withdrawals</h3>
+                <div class="value">₹<span id="pendingWithdrawals">0</span></div>
+                <small style="opacity:0.7;">Requests: <span id="pendingCount">0</span></small>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('users')">👥 Users (<span id="tabUserCount">0</span>)</button>
+            <button class="tab-btn" onclick="showTab('payments')">💳 Payments (<span id="tabPaymentCount">0</span>)</button>
+            <button class="tab-btn" onclick="showTab('withdrawals')">💸 Withdrawals (<span id="tabWithdrawalCount">0</span>)</button>
+            <button class="tab-btn" onclick="showTab('utr')">📝 UTR Submissions (<span id="tabUTRCount">0</span>)</button>
+        </div>
+
+        <!-- Search -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Search by email, name, UTR..." oninput="filterData()">
+            <select class="filter-select" id="statusFilter" onchange="filterData()">
+                <option value="all">All Status</option>
+                <option value="active">Active Users</option>
+                <option value="no-plan">No Plan</option>
+                <option value="blocked">Blocked</option>
+            </select>
+        </div>
+
+        <!-- Users Table -->
+        <div class="table-container" id="usersTable">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Balance</th>
+                        <th>Active Plans</th>
+                        <th>Total Earned</th>
+                        <th>Payments Made</th>
+                        <th>Withdrawals</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Payments Table -->
+        <div class="table-container" id="paymentsTable" style="display:none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>UTR/Ref</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentsTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Withdrawals Table -->
+        <div class="table-container" id="withdrawalsTable" style="display:none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Details</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="withdrawalsTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- UTR Table -->
+        <div class="table-container" id="utrTable" style="display:none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>UTR Number</th>
+                        <th>Amount</th>
+                        <th>Plan</th>
+                        <th>User Email</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="utrTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- User Detail Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <h2>👤 User Details</h2>
+            <div id="userDetailContent"></div>
+            <button class="btn btn-danger" onclick="closeModal('userModal')" style="margin-top:15px;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let allUsers = {};
+        let utrSubmissions = [];
+        let currentTab = 'users';
+
+        // Load all data
+        function loadAllData() {
+            allUsers = JSON.parse(localStorage.getItem('earnhubUsers') || '{}');
+            utrSubmissions = JSON.parse(localStorage.getItem('earnhub_utr_submissions') || '[]');
+            updateStats();
+            renderCurrentTab();
+        }
+
+        // Update statistics
+        function updateStats() {
+            const users = Object.values(allUsers);
+            const totalUsers = users.length;
+            const activeUsers = users.filter(u => u.hasPlanActivated && !u.isBlocked).length;
+            
+            // Calculate payments
+            let totalPayments = 0;
+            let paidUsersSet = new Set();
+            users.forEach(u => {
+                if(u.transactionHistory) {
+                    u.transactionHistory.forEach(t => {
+                        if(t.type === 'Payment' || t.type === 'Payment (UTR)') {
+                            totalPayments += Math.abs(t.amount);
+                            paidUsersSet.add(u.email);
+                        }
+                    });
+                }
+            });
+
+            // Calculate withdrawals
+            let totalWithdrawals = 0;
+            let completedWithdrawals = 0;
+            let pendingWithdrawals = 0;
+            let pendingCount = 0;
+            
+            users.forEach(u => {
+                if(u.transactionHistory) {
+                    u.transactionHistory.forEach(t => {
+                        if(t.type === 'Withdrawal') {
+                            totalWithdrawals += Math.abs(t.amount);
+                            if(t.status === 'Completed') {
+                                completedWithdrawals += Math.abs(t.amount);
+                            } else if(t.status === 'Processing') {
+                                pendingWithdrawals += Math.abs(t.amount);
+                                pendingCount++;
+                            }
+                        }
+                    });
+                }
+            });
+
+            document.getElementById('totalUsers').innerText = totalUsers;
+            document.getElementById('activeUsers').innerText = activeUsers;
+            document.getElementById('totalPayments').innerText = totalPayments.toLocaleString();
+            document.getElementById('paidUsers').innerText = paidUsersSet.size;
+            document.getElementById('totalWithdrawals').innerText = totalWithdrawals.toLocaleString();
+            document.getElementById('completedWithdrawals').innerText = completedWithdrawals.toLocaleString();
+            document.getElementById('pendingWithdrawals').innerText = pendingWithdrawals.toLocaleString();
+            document.getElementById('pendingCount').innerText = pendingCount;
+
+            document.getElementById('tabUserCount').innerText = totalUsers;
+            document.getElementById('tabPaymentCount').innerText = paidUsersSet.size;
+            
+            let wCount = 0;
+            users.forEach(u => {
+                if(u.transactionHistory) {
+                    u.transactionHistory.forEach(t => {
+                        if(t.type === 'Withdrawal') wCount++;
+                    });
+                }
+            });
+            document.getElementById('tabWithdrawalCount').innerText = wCount;
+            document.getElementById('tabUTRCount').innerText = utrSubmissions.length;
+        }
+
+        // Show tab
+        function showTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                if(b.innerText.toLowerCase().includes(tab)) b.classList.add('active');
+            });
+            
+            document.getElementById('usersTable').style.display = 'none';
+            document.getElementById('paymentsTable').style.display = 'none';
+            document.getElementById('withdrawalsTable').style.display = 'none';
+            document.getElementById('utrTable').style.display = 'none';
+            
+            if(tab === 'users') document.getElementById('usersTable').style.display = 'block';
+            if(tab === 'payments') document.getElementById('paymentsTable').style.display = 'block';
+            if(tab === 'withdrawals') document.getElementById('withdrawalsTable').style.display = 'block';
+            if(tab === 'utr') document.getElementById('utrTable').style.display = 'block';
+            
+            renderCurrentTab();
+        }
+
+        // Render based on current tab
+        function renderCurrentTab() {
+            if(currentTab === 'users') renderUsersTable();
+            if(currentTab === 'payments') renderPaymentsTable();
+            if(currentTab === 'withdrawals') renderWithdrawalsTable();
+            if(currentTab === 'utr') renderUTRTable();
+        }
+
+        // Filter data
+        function filterData() {
+            renderCurrentTab();
+        }
+
+        // Render users table
+        function renderUsersTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const users = Object.values(allUsers);
+            
+            let filtered = users.filter(u => {
+                const matchSearch = !search || 
+                    (u.user && u.user.toLowerCase().includes(search)) ||
+                    (u.email && u.email.toLowerCase().includes(search));
+                
+                let matchStatus = true;
+                if(status === 'active') matchStatus = u.hasPlanActivated && !u.isBlocked;
+                if(status === 'no-plan') matchStatus = !u.hasPlanActivated;
+                if(status === 'blocked') matchStatus = u.isBlocked;
+                
+                return matchSearch && matchStatus;
+            });
+
+            const tbody = document.getElementById('usersTableBody');
+            
+            if(filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;">No users found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(u => {
+                const activePlans = (u.purchasedLevels || []).filter(p => !p.expiredFlag).length;
+                const totalEarned = u.totalBalance || 0;
+                const paymentsMade = (u.transactionHistory || []).filter(t => t.type.includes('Payment')).length;
+                const withdrawals = (u.transactionHistory || []).filter(t => t.type === 'Withdrawal').length;
+                
+                let statusBadge = '';
+                if(u.isBlocked) statusBadge = '<span class="badge badge-expired">Blocked</span>';
+                else if(u.hasPlanActivated) statusBadge = '<span class="badge badge-success">Active</span>';
+                else statusBadge = '<span class="badge badge-pending">No Plan</span>';
+
+                return `
+                    <tr>
+                        <td>${u.user || 'N/A'}</td>
+                        <td>${u.email || 'N/A'}</td>
+                        <td class="amount-positive">₹${totalEarned.toLocaleString()}</td>
+                        <td>${activePlans}</td>
+                        <td>₹${totalEarned.toLocaleString()}</td>
+                        <td>${paymentsMade}</td>
+                        <td>${withdrawals}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-info" style="padding:5px 10px;font-size:11px;" onclick="viewUserDetails('${u.email}')">👁 View</button>
+                            <button class="btn btn-warning" style="padding:5px 10px;font-size:11px;" onclick="toggleUserBlock('${u.email}')">${u.isBlocked ? 'Unblock' : 'Block'}</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render payments table
+        function renderPaymentsTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const allPayments = [];
+            
+            // Include Razorpay verified payments
+            const rzpPayments = JSON.parse(localStorage.getItem('earnhubPayments') || '[]');
+            rzpPayments.forEach(p => {
+                allPayments.push({
+                    date: p.date,
+                    user: p.user,
+                    email: p.email,
+                    description: `Razorpay: ${p.plan}`,
+                    amount: p.amount,
+                    type: 'Razorpay Verified',
+                    status: 'Verified ✅',
+                    paymentId: p.id
+                });
+            });
+            
+            Object.values(allUsers).forEach(u => {
+                if(u.transactionHistory) {
+                    u.transactionHistory.forEach(t => {
+                        if(t.type === 'Payment' || t.type === 'Payment (UTR)') {
+                            // Skip if already added from earnhubPayments
+                            if(t.paymentId && rzpPayments.find(r => r.id === t.paymentId)) return;
+                            allPayments.push({
+                                ...t,
+                                user: u.user,
+                                email: u.email,
+                                paymentId: t.paymentId || 'N/A'
+                            });
+                        }
+                    });
+                }
+            });
+
+            let filtered = allPayments.filter(p => {
+                return !search || 
+                    (p.user && p.user.toLowerCase().includes(search)) ||
+                    (p.email && p.email.toLowerCase().includes(search)) ||
+                    (p.description && p.description.toLowerCase().includes(search));
+            });
+
+            const tbody = document.getElementById('paymentsTableBody');
+            
+            if(filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;">No payments found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(p => `
+                <tr>
+                    <td>${p.date}</td>
+                    <td>${p.user}</td>
+                    <td>${p.email}</td>
+                    <td>${p.description}</td>
+                    <td class="amount-positive">₹${Math.abs(p.amount).toLocaleString()}</td>
+                    <td>${p.type || (p.type && p.type.includes('UTR') ? 'Manual UPI' : 'Razorpay')}</td>
+                    <td style="font-size:11px; color:#4ade80;">${p.paymentId && p.paymentId !== 'N/A' ? p.paymentId : (p.description && p.description.includes('UTR:') ? p.description.split('UTR:')[1]?.trim() || 'N/A' : 'N/A')}</td>
+                    <td><span class="badge badge-${p.status && p.status.includes('Verified') ? 'success' : (p.status === 'Completed' ? 'success' : 'pending')}">${p.status}</span></td>
+                    <td>
+                        <button class="btn btn-primary" style="padding:5px 10px;font-size:11px;" onclick="verifyPayment('${p.email}', '${p.date}')">✅ Verify</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Render withdrawals table
+        function renderWithdrawalsTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const allWithdrawals = [];
+            
+            Object.values(allUsers).forEach(u => {
+                if(u.transactionHistory) {
+                    u.transactionHistory.forEach(t => {
+                        if(t.type === 'Withdrawal') {
+                            allWithdrawals.push({
+                                ...t,
+                                user: u.user,
+                                email: u.email
+                            });
+                        }
+                    });
+                }
+            });
+
+            let filtered = allWithdrawals.filter(w => {
+                return !search || 
+                    (w.user && w.user.toLowerCase().includes(search)) ||
+                    (w.email && w.email.toLowerCase().includes(search));
+            });
+
+            const tbody = document.getElementById('withdrawalsTableBody');
+            
+            if(filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;">No withdrawals found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(w => `
+                <tr>
+                    <td>${w.date}</td>
+                    <td>${w.user}</td>
+                    <td>${w.email}</td>
+                    <td class="amount-negative">₹${Math.abs(w.amount).toLocaleString()}</td>
+                    <td>${w.description}</td>
+                    <td>Bank/UPI</td>
+                    <td><span class="badge badge-${w.status === 'Completed' ? 'success' : w.status === 'Processing' ? 'pending' : 'expired'}">${w.status}</span></td>
+                    <td>
+                        ${w.status === 'Processing' ? `
+                            <button class="btn btn-primary" style="padding:5px 10px;font-size:11px;" onclick="approveWithdrawal('${w.email}', '${w.date}')">✅ Approve</button>
+                            <button class="btn btn-danger" style="padding:5px 10px;font-size:11px;" onclick="rejectWithdrawal('${w.email}', '${w.date}')">❌ Reject</button>
+                        ` : 'Done'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Render UTR table
+        function renderUTRTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filtered = utrSubmissions.filter(u => {
+                return !search || 
+                    u.utr.toLowerCase().includes(search) ||
+                    u.plan.toLowerCase().includes(search) ||
+                    (u.userEmail && u.userEmail.toLowerCase().includes(search));
+            });
+
+            const tbody = document.getElementById('utrTableBody');
+            
+            if(filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;">No UTR submissions found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((u, index) => `
+                <tr>
+                    <td>${u.date}</td>
+                    <td><strong>${u.utr}</strong></td>
+                    <td class="amount-positive">₹${u.amount.toLocaleString()}</td>
+                    <td>${u.plan}</td>
+                    <td>${u.userEmail || 'N/A'}</td>
+                    <td><span class="badge badge-${u.status === 'verified' ? 'success' : 'pending'}">${u.status}</span></td>
+                    <td>
+                        <button class="btn btn-primary" style="padding:5px 10px;font-size:11px;" onclick="verifyUTR(${index})">✅ Verify</button>
+                        <button class="btn btn-danger" style="padding:5px 10px;font-size:11px;" onclick="deleteUTR(${index})">🗑 Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // View user details
+        function viewUserDetails(email) {
+            const user = allUsers[email];
+            if(!user) return;
+            
+            const content = document.getElementById('userDetailContent');
+            const activePlans = (user.purchasedLevels || []).filter(p => !p.expiredFlag);
+            const expiredPlans = (user.purchasedLevels || []).filter(p => p.expiredFlag);
+            const payments = (user.transactionHistory || []).filter(t => t.type.includes('Payment'));
+            const withdrawals = (user.transactionHistory || []).filter(t => t.type === 'Withdrawal');
+            
+            content.innerHTML = `
+                <div class="user-detail-row"><span>Name:</span><span>${user.user}</span></div>
+                <div class="user-detail-row"><span>Email:</span><span>${user.email}</span></div>
+                <div class="user-detail-row"><span>Balance:</span><span class="amount-positive">₹${(user.totalBalance || 0).toLocaleString()}</span></div>
+                <div class="user-detail-row"><span>Active Plans:</span><span>${activePlans.length}</span></div>
+                <div class="user-detail-row"><span>Expired Plans:</span><span>${expiredPlans.length}</span></div>
+                <div class="user-detail-row"><span>Total Payments:</span><span>${payments.length} (₹${payments.reduce((s,p) => s + Math.abs(p.amount), 0).toLocaleString()})</span></div>
+                <div class="user-detail-row"><span>Total Withdrawals:</span><span>${withdrawals.length} (₹${withdrawals.reduce((s,w) => s + Math.abs(w.amount), 0).toLocaleString()})</span></div>
+                <div class="user-detail-row"><span>Status:</span><span>${user.isBlocked ? 'Blocked' : user.hasPlanActivated ? 'Active' : 'No Plan'}</span></div>
+            `;
+            
+            document.getElementById('userModal').classList.add('active');
+        }
+
+        // Toggle user block
+        function toggleUserBlock(email) {
+            const user = allUsers[email];
+            if(!user) return;
+            
+            user.isBlocked = !user.isBlocked;
+            allUsers[email] = user;
+            localStorage.setItem('earnhubUsers', JSON.stringify(allUsers));
+            alert(`User ${user.isBlocked ? 'Blocked' : 'Unblocked'} successfully!`);
+            refreshData();
+        }
+
+        // Approve withdrawal
+        function approveWithdrawal(email, date) {
+            const user = allUsers[email];
+            if(!user) return;
+            
+            if(user.transactionHistory) {
+                const withdrawal = user.transactionHistory.find(t => t.type === 'Withdrawal' && t.date === date);
+                if(withdrawal) {
+                    withdrawal.status = 'Completed';
+                    allUsers[email] = user;
+                    localStorage.setItem('earnhubUsers', JSON.stringify(allUsers));
+                    alert('✅ Withdrawal Approved!');
+                    refreshData();
+                }
+            }
+        }
+
+        // Reject withdrawal
+        function rejectWithdrawal(email, date) {
+            const user = allUsers[email];
+            if(!user) return;
+            
+            if(user.transactionHistory) {
+                const withdrawal = user.transactionHistory.find(t => t.type === 'Withdrawal' && t.date === date);
+                if(withdrawal) {
+                    withdrawal.status = 'Rejected';
+                    user.totalBalance += Math.abs(withdrawal.amount);
+                    allUsers[email] = user;
+                    localStorage.setItem('earnhubUsers', JSON.stringify(allUsers));
+                    alert('❌ Withdrawal Rejected! Amount returned to wallet.');
+                    refreshData();
+                }
+            }
+        }
+
+        // Verify UTR
+        function verifyUTR(index) {
+            utrSubmissions[index].status = 'verified';
+            localStorage.setItem('earnhub_utr_submissions', JSON.stringify(utrSubmissions));
+            alert('✅ UTR Verified!');
+            
+            // Optionally activate plan for user
+            const utrData = utrSubmissions[index];
+            if(utrData.userEmail && allUsers[utrData.userEmail]) {
+                const user = allUsers[utrData.userEmail];
+                user.transactionHistory = user.transactionHistory || [];
+                user.transactionHistory.unshift({
+                    date: new Date().toLocaleDateString(),
+                    type: 'Payment (UTR)',
+                    description: `UTR Verified: ${utrData.plan}`,
+                    amount: -utrData.amount,
+                    status: 'Completed'
+                });
+                allUsers[utrData.userEmail] = user;
+                localStorage.setItem('earnhubUsers', JSON.stringify(allUsers));
+            }
+            refreshData();
+        }
+
+        // Delete UTR
+        function deleteUTR(index) {
+            if(confirm('Delete this UTR submission?')) {
+                utrSubmissions.splice(index, 1);
+                localStorage.setItem('earnhub_utr_submissions', JSON.stringify(utrSubmissions));
+                refreshData();
+            }
+        }
+
+        // Verify payment
+        function verifyPayment(email, date) {
+            const user = allUsers[email];
+            if(!user) return;
+            
+            if(user.transactionHistory) {
+                const payment = user.transactionHistory.find(t => 
+                    (t.type === 'Payment' || t.type === 'Payment (UTR)') && t.date === date
+                );
+                if(payment) {
+                    payment.status = 'Completed';
+                    allUsers[email] = user;
+                    localStorage.setItem('earnhubUsers', JSON.stringify(allUsers));
+                    alert('✅ Payment Verified!');
+                    refreshData();
+                }
+            }
+        }
+
+        // Refresh all data
+        function refreshData() {
+            loadAllData();
+            alert('🔄 Data Refreshed!');
+        }
+
+        // Export data
+        function exportData() {
+            const data = {
+                users: allUsers,
+                utrSubmissions: utrSubmissions,
+                exportDate: new Date().toLocaleString(),
+                summary: {
+                    totalUsers: Object.keys(allUsers).length,
+                    activeUsers: Object.values(allUsers).filter(u => u.hasPlanActivated).length,
+                    totalPayments: Object.values(allUsers).reduce((s, u) => {
+                        return s + (u.transactionHistory || []).filter(t => t.type.includes('Payment')).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                    }, 0)
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `earnhub_report_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
+            a.click();
+            alert('📥 Report Downloaded!');
+        }
+
+        // Close modal
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Show add user modal
+        function showAddUserModal() {
+            const name = prompt('Enter user name:');
+            const email = prompt('Enter user email:');
+            if(name && email) {
+                const users = JSON.parse(localStorage.getItem('earnhubUsers') || '{}');
+                if(users[email]) {
+                    alert('User already exists!');
+                    return;
+                }
+                users[email] = {
+                    user: name,
+                    email: email,
+                    password: '123456',
+                    totalBalance: 0,
+                    purchasedLevels: [],
+                    activeTasks: [],
+                    transactionHistory: [],
+                    dailyEarnings: {},
+                    hasPlanActivated: false,
+                    receivedBonus: false,
+                    isBlocked: false
+                };
+                localStorage.setItem('earnhubUsers', JSON.stringify(users));
+                refreshData();
+            }
+        }
+
+        // Reset all data
+        function resetAllData() {
+            if(confirm('⚠️ Are you sure? This will delete ALL users, payments, and withdrawals!')) {
+                if(confirm('FINAL WARNING: This cannot be undone! Continue?')) {
+                    localStorage.removeItem('earnhubUsers');
+                    localStorage.removeItem('earnhub_utr_submissions');
+                    allUsers = {};
+                    utrSubmissions = [];
+                    refreshData();
+                    alert('All data has been reset!');
+                }
+            }
+        }
+
+        // Initial load
+        loadAllData();
+
+        // Auto refresh every 30 seconds
+        setInterval(loadAllData, 30000);
+    </script>
+</body>
+</html>
